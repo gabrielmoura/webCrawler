@@ -76,7 +76,9 @@ func IsVisited(url string) bool {
 }
 
 func AllVisited() ([]string, error) {
-	cursor, err := client.Database("webcrawler").Collection("pages").Find(context.TODO(), bson.D{})
+	opts := options.Find().SetProjection(bson.D{{"_id", 0}, {"url", 1}})
+
+	cursor, err := client.Database("webcrawler").Collection("pages").Find(context.TODO(), bson.D{}, opts)
 	if err != nil {
 		log.Logger.Error("Failed to retrieve all visited pages from MongoDB", zap.Error(err))
 		return nil, err

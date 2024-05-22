@@ -13,6 +13,8 @@ var (
 	MaxDepth       = flag.Int("maxDepth", 2, "Max depth to crawl")
 	enabledConfig  = flag.Bool("config", false, "Enable config file")
 	enabledI2P     = flag.Bool("i2p", false, "Enable I2P")
+
+	inicialURL = flag.String("url", "https://www.uol.com.br", "URL inicial")
 )
 
 type Config struct {
@@ -24,6 +26,7 @@ type Config struct {
 	TimeZone       string  `mapstructure:"TIME_ZONE"`
 	DBDir          string  `mapstructure:"DB_DIR"`
 	I2PCfg         *I2PCfg `mapstructure:"I2P_CFG"`
+	InicialURL     string  `mapstructure:"URL"`
 }
 type I2PCfg struct {
 	Enabled         bool   `mapstructure:"ENABLED"`
@@ -47,6 +50,7 @@ func loadByFlag() error {
 		MaxDepth:       *MaxDepth,
 		MongoURI:       "mongodb://root:Strong%40P4word@localhost:27017",
 		DBDir:          "/tmp/badgerDB",
+		InicialURL:     *inicialURL,
 		I2PCfg: &I2PCfg{
 			Enabled:         *enabledI2P,
 			HttpHostAndPort: "127.0.0.1:7672",

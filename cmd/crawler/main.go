@@ -14,8 +14,5 @@ func main() {
 	db.InitDB()
 	cache.InitCache()
 
-	startUrl := "http://wiki.i2p-projekt.i2p/wiki/index.php/Eepsite/Services"
-	crawler.Wg.Add(1)
-	go crawler.HandlePage(startUrl, 0)
-	crawler.Wg.Wait()
+	crawler.HandleQueue(config.Conf.InicialURL)
 }
