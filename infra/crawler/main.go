@@ -22,10 +22,6 @@ func HandlePageV2(pageUrl string) {
 	// Só processa uma página se ela ainda não foi visitada
 	defer Wg.Done()
 
-	//time.Sleep(1 * time.Second) // Sleep for 1 second to avoid being blocked
-	//semaphore <- struct{}{}
-	//defer func() { <-semaphore }()
-
 	if GetVisited(pageUrl) {
 		return
 	}
@@ -60,13 +56,7 @@ func HandlePageV2(pageUrl string) {
 
 	SetPage(pageUrl, dataPage)
 
-	for _, link := range links {
-		err := cache.AddToQueue(link)
-		if err != nil {
-			log.Logger.Error(fmt.Sprintf("Error adding link to queue: %s", err))
-			return
-		}
-	}
+	handleAddToCache(links)
 
 	log.Logger.Info(fmt.Sprintf("Total links %d", len(links)))
 }
@@ -95,15 +85,15 @@ func loopQueue(depth int) {
 		}
 
 		for _, link := range links {
-			Wg.Add(1)
+			Wg.Add(1) // Para
 			go HandlePageV2(link)
 		}
 		Wg.Wait()
 	}
-	err := cache.OptimizeCache()
-	if err != nil {
-		log.Logger.Error(fmt.Sprintf("Error optimizing cache: %s", err))
-	}
+	//err := cache.OptimizeCache()
+	//if err != nil {
+	//	log.Logger.Error(fmt.Sprintf("Error optimizing cache: %s", err))
+	//}
 	loopQueue(depth + 1)
 }
 
@@ -155,9 +145,9 @@ func extractLinks(parentLink string, n *html.Node) ([]string, error) {
 							if err != nil {
 								continue
 							}
-							urlE, err = prepareLink(preparedLink)
+							urlE = preparedLink
 						}
-						log.Logger.Info(fmt.Sprintf("Error preparing link: %s", err))
+						log.Logger.Debug(fmt.Sprintf("Error preparing link: %s", err))
 						continue
 					}
 					links = append(links, urlE.String())
