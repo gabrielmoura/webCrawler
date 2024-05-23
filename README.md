@@ -7,8 +7,32 @@ Simples, escrito em Go, com suporte a proxies, controle de concorrência e profu
 Os dados coletados podem ser salvos em um banco de dados mongodb, futuramente poderá ser implementado suporte a outros bancos de dados.
 
 ## Uso:
+É possível usar as flags para configurar o crawler, ou usar um arquivo de configuração em yaml.
+Um exemplo de configuração pode ser encontrado em [config.yml](example_config.yml).
 
-### I2P
+### Uso com arquivo de configuração:
+
+```yml
+maxConcurrency: 10
+maxDepth: 50
+proxy:
+  proxyURL: http://localhost:4444
+url: http://i2pforum.i2p
+tlds:
+  - i2p
+```
+
+O comando abaixo irá executar o crawler procurando as configurações do arquivo `config.yml` nos diretórios:
+- `/etc/crw`
+- `/opt/crw`
+- `.` (diretório atual)
+```bash
+./crawler -config
+```
+
+
+### Uso com Flags:
+#### I2P
 ```bash
 ./crawler -maxConcurrency=10 \
   -maxDepth=50 \
@@ -17,7 +41,7 @@ Os dados coletados podem ser salvos em um banco de dados mongodb, futuramente po
   -tlds=i2p
 ```
 
-### Tor
+#### Tor
 ```bash
 ./crawler -maxConcurrency=10 \
   -maxDepth=50 \
@@ -26,7 +50,7 @@ Os dados coletados podem ser salvos em um banco de dados mongodb, futuramente po
   -tlds=onion
 ```
 
-### Clearnet
+#### Clearnet
 ```bash
 ./crawler -maxConcurrency=10 \
   -maxDepth=50 \

@@ -19,7 +19,8 @@ var (
 	inicialURL     = flag.String("url", "https://www.uol.com.br", "URL inicial")
 	cacheMode      = flag.Bool("mem", false, "Cache mode")
 	// tlds list of Top-Level Domains
-	tlds = flag.String("tlds", "", "TLDs to filter EX: com,br,org")
+	tlds     = flag.String("tlds", "", "TLDs to filter EX: com,br,org")
+	mongoURI = flag.String("mongoURI", "mongodb://root:Strong%40P4word@localhost:27017", "Mongo URI")
 )
 
 func splitComma(txt string) []string {
@@ -58,12 +59,12 @@ var Conf *Config
 func loadByFlag() error {
 	cfg := &Config{
 
-		AppName:        "DavServer",
+		AppName:        "WebCrawler",
 		TimeFormat:     "02-Jan-2006",
 		TimeZone:       "America/Sao_Paulo",
 		MaxConcurrency: *MaxConcurrency,
 		MaxDepth:       *MaxDepth,
-		MongoURI:       "mongodb://root:Strong%40P4word@localhost:27017",
+		MongoURI:       *mongoURI,
 		InicialURL:     *inicialURL,
 		Cache: &CacheConfig{
 			DBDir: "/tmp/badgerDB",
@@ -86,10 +87,11 @@ func loadByConfigFile() error {
 	vip := viper.New()
 
 	// Definindo valores padrão
-	vip.SetDefault("APP_NAME", "DavServer")
+	vip.SetDefault("APP_NAME", "WebCrawler")
 	vip.SetDefault("TIME_FORMAT", "02-Jan-2006")
 	vip.SetDefault("TIME_ZONE", "America/Sao_Paulo")
 	vip.SetDefault("DB_DIR", "/tmp/badgerDB")
+	vip.SetDefault("MONGO_URI", "mongodb://root:Strong%40P4word@localhost:27017")
 
 	vip.SetDefault("PROXY.ENABLED", false)
 	vip.SetDefault("PROXY.PROXY_URL", "http://localhost:4444")

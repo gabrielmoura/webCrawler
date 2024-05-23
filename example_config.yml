@@ -1,0 +1,15 @@
+APP_NAME: "WebCrawler"
+TIME_FORMAT: "02-Jan-2006"
+TIME_ZONE: "America/Sao_Paulo"
+MAX_CONCURRENCY: 10
+MAX_DEPTH: 2
+MONGO_URI: "mongodb://root:Strong%40P4word@localhost:27017"
+URL: "https://www.uol.com.br"
+CACHE:
+  DB_DIR: "/tmp/badgerDB"
+  MODE: "disc"  # "mem" para memória, "disc" para disco
+PROXY:
+  ENABLED: false
+  PROXY_URL: "http://localhost:4444"
+FILTER:
+  TLDS: []  # Lista de TLDs, exemplo: [com, br, org]
