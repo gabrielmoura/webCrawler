@@ -12,8 +12,16 @@ import (
 var cdb *badger.DB
 var indexName = "visitedIndex"
 
+func getBadgerMode() badger.Options {
+	if config.Conf.Cache.Mode == "mem" {
+		return badger.DefaultOptions("").WithInMemory(true)
+	} else {
+		return badger.DefaultOptions(config.Conf.Cache.DBDir)
+	}
+}
+
 func InitCache() error {
-	opts := badger.DefaultOptions(config.Conf.DBDir)
+	opts := getBadgerMode()
 	opts.Logger = nil
 	open, err := badger.Open(opts)
 	if err != nil {
@@ -21,10 +29,6 @@ func InitCache() error {
 	}
 	cdb = open
 
-	err = SyncCache()
-	if err != nil {
-		return err
-	}
 	que := NewBadgerQueue(cdb)
 	queue = que
 	return nil

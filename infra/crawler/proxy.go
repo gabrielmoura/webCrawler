@@ -1,17 +1,16 @@
 package crawler
 
 import (
+	"github.com/gabrielmoura/WebCrawler/config"
 	"net/http"
 	"net/url"
 	"time"
 )
 
-func I2PClient() *http.Client {
+func ProxyClient() *http.Client {
+	urlProxy, _ := url.Parse(config.Conf.Proxy.ProxyURL)
 	transport := &http.Transport{
-		Proxy: http.ProxyURL(&url.URL{
-			Scheme: "http",
-			Host:   "localhost:4444",
-		}),
+		Proxy: http.ProxyURL(urlProxy),
 	}
 
 	client := &http.Client{

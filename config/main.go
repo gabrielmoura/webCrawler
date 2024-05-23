@@ -3,39 +3,54 @@ package config
 import (
 	"errors"
 	"flag"
+	"github.com/gabrielmoura/go/pkg/ternary"
 	"github.com/spf13/viper"
 	"log"
 	"regexp"
+	"strings"
 )
 
 var (
 	MaxConcurrency = flag.Int("maxConcurrency", 10, "Max number of concurrent requests")
 	MaxDepth       = flag.Int("maxDepth", 2, "Max depth to crawl")
 	enabledConfig  = flag.Bool("config", false, "Enable config file")
-	enabledI2P     = flag.Bool("i2p", false, "Enable I2P")
-
-	inicialURL = flag.String("url", "https://www.uol.com.br", "URL inicial")
+	enableProxy    = flag.Bool("proxy", false, "Enable Proxy")
+	proxyURL       = flag.String("proxyURL", "http://localhost:4444", "Proxy URL")
+	inicialURL     = flag.String("url", "https://www.uol.com.br", "URL inicial")
+	cacheMode      = flag.Bool("mem", false, "Cache mode")
+	// tlds list of Top-Level Domains
+	tlds = flag.String("tlds", "", "TLDs to filter EX: com,br,org")
 )
 
-type Config struct {
-	MaxConcurrency int
-	MaxDepth       int
-	MongoURI       string
-	AppName        string  `mapstructure:"APP_NAME"`
-	TimeFormat     string  `mapstructure:"TIME_FORMAT"`
-	TimeZone       string  `mapstructure:"TIME_ZONE"`
-	DBDir          string  `mapstructure:"DB_DIR"`
-	I2PCfg         *I2PCfg `mapstructure:"I2P_CFG"`
-	InicialURL     string  `mapstructure:"URL"`
+func splitComma(txt string) []string {
+	if txt == "" {
+		return []string{}
+	}
+	return strings.Split(txt, ",")
 }
-type I2PCfg struct {
-	Enabled         bool   `mapstructure:"ENABLED"`
-	HttpHostAndPort string `mapstructure:"HTTP_HOST_AND_PORT"`
-	Host            string `mapstructure:"HOST"`
-	Url             string `mapstructure:"URL"`
-	HttpsUrl        string `mapstructure:"HTTPS_URL"`
-	SAMAddr         string `mapstructure:"SAM_ADDR"`
-	KeyPath         string `mapstructure:"KEY_PATH"`
+
+type Config struct {
+	MaxConcurrency int          `mapstructure:"MAX_CONCURRENCY"`
+	MaxDepth       int          `mapstructure:"MAX_DEPTH"`
+	MongoURI       string       `mapstructure:"MONGO_URI"`
+	AppName        string       `mapstructure:"APP_NAME"`
+	TimeFormat     string       `mapstructure:"TIME_FORMAT"`
+	TimeZone       string       `mapstructure:"TIME_ZONE"`
+	InicialURL     string       `mapstructure:"URL"`
+	Cache          *CacheConfig `mapstructure:"CACHE"`
+	Proxy          *Proxy       `mapstructure:"PROXY"`
+	Filter         *Filter      `mapstructure:"FILTER"`
+}
+type CacheConfig struct {
+	DBDir string `mapstructure:"DB_DIR"`
+	Mode  string `mapstructure:"MODE"` // "mem" or "disc'
+}
+type Proxy struct {
+	Enabled  bool   `mapstructure:"ENABLED"`
+	ProxyURL string `mapstructure:"PROXY_URL"`
+}
+type Filter struct {
+	Tlds []string `mapstructure:"TLDS"`
 }
 
 var Conf *Config
@@ -49,16 +64,17 @@ func loadByFlag() error {
 		MaxConcurrency: *MaxConcurrency,
 		MaxDepth:       *MaxDepth,
 		MongoURI:       "mongodb://root:Strong%40P4word@localhost:27017",
-		DBDir:          "/tmp/badgerDB",
 		InicialURL:     *inicialURL,
-		I2PCfg: &I2PCfg{
-			Enabled:         *enabledI2P,
-			HttpHostAndPort: "127.0.0.1:7672",
-			Host:            "",
-			Url:             "127.0.0.1:7672",
-			HttpsUrl:        "",
-			SAMAddr:         "127.0.0.1:7656",
-			KeyPath:         "./",
+		Cache: &CacheConfig{
+			DBDir: "/tmp/badgerDB",
+			Mode:  ternary.Ternary(*cacheMode, "mem", "disc"),
+		},
+		Proxy: &Proxy{
+			Enabled:  *enableProxy,
+			ProxyURL: *proxyURL,
+		},
+		Filter: &Filter{
+			Tlds: splitComma(*tlds),
 		},
 	}
 	// Atualiza a variável global Conf
@@ -75,10 +91,10 @@ func loadByConfigFile() error {
 	vip.SetDefault("TIME_ZONE", "America/Sao_Paulo")
 	vip.SetDefault("DB_DIR", "/tmp/badgerDB")
 
-	vip.SetDefault("I2P_CFG.ENABLED", false)
-	vip.SetDefault("I2P_CFG.SAM_ADDR", "127.0.0.1:7656")
-	vip.SetDefault("I2P_CFG.HTTP_HOST_AND_PORT", "127.0.0.1:7672")
-	vip.SetDefault("I2P_CFG.KEY_PATH", "./")
+	vip.SetDefault("PROXY.ENABLED", false)
+	vip.SetDefault("PROXY.PROXY_URL", "http://localhost:4444")
+
+	vip.SetDefault("FILTER.TLDS", []string{})
 
 	// Lendo o arquivo de configuração conf.yml
 	vip.SetConfigName("conf")
@@ -101,6 +117,9 @@ func loadByConfigFile() error {
 		if !regex.MatchString(vip.GetString("APP_NAME")) {
 			return errors.New("APP_NAME só pode conter letras e números")
 		}
+	}
+	if vip.IsSet("FILTER.TLDS") {
+		vip.Set("FILTER.TLDS", splitComma(vip.GetString("FILTER.TLDS")))
 	}
 
 	// Atribua as configurações ao cfg

@@ -182,8 +182,8 @@ func CheckLink(pageUrl string) (*html.Node, error) {
 }
 
 func HttpClient() *http.Client {
-	if config.Conf.I2PCfg.Enabled {
-		return I2PClient()
+	if config.Conf.Proxy.Enabled {
+		return ProxyClient()
 	} else {
 		return &http.Client{
 			Timeout: 5 * time.Second, // Definir um timeout de 5 segundos

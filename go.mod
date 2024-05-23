@@ -4,10 +4,7 @@ go 1.22
 
 require (
 	github.com/dgraph-io/badger/v4 v4.2.0
-	github.com/eyedeekay/checki2cp v0.0.21
-	github.com/eyedeekay/i2pkeys v0.33.7
-	github.com/eyedeekay/sam3 v0.33.7
-	github.com/gabrielmoura/davServer v0.0.0-20240521171644-9f5f40fd8afd
+	github.com/gabrielmoura/go v0.0.0-20240523142202-54d0f3036790
 	github.com/spf13/viper v1.18.2
 	go.mongodb.org/mongo-driver v1.15.0
 	go.uber.org/zap v1.27.0
@@ -25,7 +22,6 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/flatbuffers v1.12.1 // indirect
-	github.com/google/uuid v1.4.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

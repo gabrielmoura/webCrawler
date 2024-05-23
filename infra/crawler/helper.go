@@ -82,34 +82,34 @@ func isAllowedMIME(contentType string, allowedMIMEs []string) bool {
 	}
 	return false
 }
-func checkI2p(link string) bool {
-	if config.Conf.I2PCfg.Enabled {
+
+func checkTLD(link string) bool {
+	if len(config.Conf.Filter.Tlds) > 0 {
 		linkUrl, err := url.Parse(link)
 		if err != nil {
 			return false
 		}
-		return strings.HasSuffix(linkUrl.Hostname(), ".i2p")
+		for _, tld := range config.Conf.Filter.Tlds {
+			if strings.HasSuffix(linkUrl.Hostname(), tld) {
+				return true
+			}
+		}
+		return false
 	}
-	return false
+	return true
 }
 
 func handleAddToCache(links []string) {
 	for _, link := range links {
-		if config.Conf.I2PCfg.Enabled {
-			if checkI2p(link) {
-				err := cache.AddToQueue(link)
-				if err != nil {
-					log.Logger.Error(fmt.Sprintf("Error adding link to queue: %s", err))
-					return
-				}
-			}
-		} else {
+
+		if checkTLD(link) {
 			err := cache.AddToQueue(link)
 			if err != nil {
 				log.Logger.Error(fmt.Sprintf("Error adding link to queue: %s", err))
 				return
 			}
 		}
+
 	}
 }
 
