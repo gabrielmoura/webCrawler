@@ -1,16 +1,16 @@
-# Um webcrawler Simples
-## Em desenvolvimento
+# Um Webcrawler Simples
+
+## Em Desenvolvimento
 
 ## Objetivo
-Um webcrawler que possa ser usado para coletar informações de sites na clearnet, i2p e tor.
-Simples, escrito em Go, com suporte a proxies, controle de concorrência e profundidade.
-Os dados coletados podem ser salvos em um banco de dados mongodb, futuramente poderá ser implementado suporte a outros bancos de dados.
+Este projeto tem como objetivo criar um webcrawler simples, escrito em Go, que possa ser usado para coletar informações de sites na clearnet, I2P e Tor. O crawler oferece suporte a proxies, controle de concorrência e definição de profundidade. Os dados coletados podem ser salvos em um banco de dados MongoDB, com planos futuros de suporte a outros bancos de dados.
 
-## Uso:
-É possível usar as flags para configurar o crawler, ou usar um arquivo de configuração em yaml.
-Um exemplo de configuração pode ser encontrado em [config.yml](example_config.yml).
+## Uso
+Você pode configurar o crawler usando flags de linha de comando ou um arquivo de configuração em YAML. Um exemplo de configuração pode ser encontrado em [example_config.yml](example_config.yml).
 
-### Uso com arquivo de configuração:
+### Uso com Arquivo de Configuração
+
+Exemplo de configuração (`config.yml`):
 
 ```yml
 maxConcurrency: 10
@@ -22,17 +22,19 @@ tlds:
   - i2p
 ```
 
-O comando abaixo irá executar o crawler procurando as configurações do arquivo `config.yml` nos diretórios:
+Para executar o crawler usando um arquivo de configuração, utilize o comando abaixo. O crawler procurará o arquivo `config.yml` nos seguintes diretórios:
 - `/etc/crw`
 - `/opt/crw`
-- `.` (diretório atual)
+- Diretório atual (`.`)
+
 ```bash
 ./crawler -config
 ```
 
+### Uso com Flags
 
-### Uso com Flags:
 #### I2P
+
 ```bash
 ./crawler -maxConcurrency=10 \
   -maxDepth=50 \
@@ -42,6 +44,7 @@ O comando abaixo irá executar o crawler procurando as configurações do arquiv
 ```
 
 #### Tor
+
 ```bash
 ./crawler -maxConcurrency=10 \
   -maxDepth=50 \
@@ -51,8 +54,12 @@ O comando abaixo irá executar o crawler procurando as configurações do arquiv
 ```
 
 #### Clearnet
+
 ```bash
 ./crawler -maxConcurrency=10 \
   -maxDepth=50 \
   -url=https://www.uol.com.br
 ```
+
+## Contribuição
+Sinta-se à vontade para contribuir com o desenvolvimento deste projeto. Para relatar problemas ou sugerir melhorias, abra uma issue ou envie um pull request.
