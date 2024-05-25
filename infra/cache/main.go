@@ -38,19 +38,18 @@ func SyncCache() error {
 	time.Sleep(1 * time.Second)
 	log.Logger.Info("Syncing cache")
 	visited, err := db.AllVisited()
-
-	err = cdb.Update(func(txn *badger.Txn) error {
-		for _, v := range visited {
-			key := []byte(fmt.Sprintf("%s:%s", indexName, v))
-			err := txn.Set(key, []byte{})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 	if err != nil {
-		return fmt.Errorf("error setting visitedIndex: %v", err)
+		return fmt.Errorf("error getting all visited: %v", err)
+	}
+	if len(visited) == 0 {
+		return nil
+	}
+
+	for _, link := range visited {
+		err := SetVisited(link)
+		if err != nil {
+			return fmt.Errorf("error setting visitedIndex: %v", err)
+		}
 	}
 	return nil
 }
