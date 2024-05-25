@@ -26,8 +26,8 @@ github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHk
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
-github.com/gabrielmoura/go v0.0.0-20240523142202-54d0f3036790 h1:I/Ys+DgjbUii4CAezB9/tRFb4F+PNT+0ItkgdgkaKPc=
-github.com/gabrielmoura/go v0.0.0-20240523142202-54d0f3036790/go.mod h1:49tF+0eTQCp7R/UuLIyNG9i+3QBsgNLL6GTcrOymCPc=
+github.com/gabrielmoura/go v0.0.0-20240523165529-159656834947 h1:IHET2qFQ+T8hGb/k1qECS5WS3a6/GqZytRMZZuvMpfE=
+github.com/gabrielmoura/go v0.0.0-20240523165529-159656834947/go.mod h1:49tF+0eTQCp7R/UuLIyNG9i+3QBsgNLL6GTcrOymCPc=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=

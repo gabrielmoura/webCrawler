@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func ProxyClient() *http.Client {
+func proxyClient() *http.Client {
 	urlProxy, _ := url.Parse(config.Conf.Proxy.ProxyURL)
 	transport := &http.Transport{
 		Proxy: http.ProxyURL(urlProxy),
@@ -19,4 +19,17 @@ func ProxyClient() *http.Client {
 	}
 
 	return client
+}
+func httpClient() *http.Client {
+	if config.Conf.Proxy.Enabled {
+		return proxyClient()
+	} else {
+		return &http.Client{
+			Timeout: 5 * time.Second, // Definir um timeout de 5 segundos
+			Transport: &http.Transport{
+				MaxIdleConns:        10,
+				MaxIdleConnsPerHost: 10,
+			},
+		}
+	}
 }

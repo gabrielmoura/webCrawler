@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/dgraph-io/badger/v4 v4.2.0
-	github.com/gabrielmoura/go v0.0.0-20240523142202-54d0f3036790
+	github.com/gabrielmoura/go v0.0.0-20240523165529-159656834947
 	github.com/spf13/viper v1.18.2
 	go.mongodb.org/mongo-driver v1.15.0
 	go.uber.org/zap v1.27.0

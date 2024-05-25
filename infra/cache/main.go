@@ -31,6 +31,7 @@ func InitCache() error {
 
 	que := NewBadgerQueue(cdb)
 	queue = que
+	//defer OptimizeCache()
 	return nil
 }
 func SyncCache() error {
@@ -90,30 +91,29 @@ func SetVisited(url string) error {
 	return nil
 }
 
-func AddToQueue(url string) error {
-
-	err := queue.Enqueue(url)
+func AddToQueue(url string, depth int) error {
+	err := queue.Enqueue(url, depth)
 	if err != nil {
 		return fmt.Errorf("error adding to queue: %v", err)
 	}
 	return nil
 }
-func GetFromQueue() (string, error) {
-	url, err := queue.Dequeue()
+func GetFromQueue() (string, int, error) {
+	url, depth, err := queue.Dequeue()
 	if err != nil {
-		return "", fmt.Errorf("error getting from queue: %v", err)
+		return "", 0, fmt.Errorf("error getting from queue: %v", err)
 	}
-	return url, nil
+	return url, depth, nil
 }
-func GetFromQueueV2(getNumber int) ([]string, error) {
-	var urls []string
+func GetFromQueueV2(getNumber int) ([]QueueType, error) {
+	var urls []QueueType
 	for i := 0; i < getNumber; i++ {
-		url, err := queue.Dequeue()
+		url, depth, err := queue.Dequeue()
 		if err != nil {
 			return nil, fmt.Errorf("error getting from queue: %v", err)
 		}
 		if url != "" {
-			urls = append(urls, url)
+			urls = append(urls, QueueType{Url: url, Depth: depth})
 		}
 	}
 	return urls, nil

@@ -44,6 +44,7 @@ var denySuffixes = []string{
 	".img",
 }
 
+// isDenyPostfix checks if the link has a deny postfix
 func isDenyPostfix(url string, denySuffixes []string) bool {
 	for _, denySuffix := range denySuffixes {
 		if strings.HasSuffix(url, denySuffix) {
@@ -73,7 +74,28 @@ var acceptableMimeTypes = []string{
 	"application/ld+json",
 	"application/vnd.geo+json",
 }
+var acceptableSchema = []string{
+	"http",
+	"https",
+	"",
+}
 
+// isAllowedSchema checks if the link has an acceptable schema
+func isAllowedSchema(link string, acceptableSchema []string) bool {
+	nLink, err := url.Parse(link)
+	if err != nil {
+		log.Logger.Debug(fmt.Sprintf("Error parsing link in checking schema: %s", err))
+		return false
+	}
+	for _, schema := range acceptableSchema {
+		if nLink.Scheme == schema {
+			return true
+		}
+	}
+	return false
+}
+
+// isAllowedMIME checks if the link has an acceptable MIME type
 func isAllowedMIME(contentType string, allowedMIMEs []string) bool {
 	for _, allowedMIME := range allowedMIMEs {
 		if strings.Contains(contentType, allowedMIME) {
@@ -83,6 +105,7 @@ func isAllowedMIME(contentType string, allowedMIMEs []string) bool {
 	return false
 }
 
+// checkTLD checks if the link has an acceptable TLD
 func checkTLD(link string) bool {
 	if len(config.Conf.Filter.Tlds) > 0 {
 		linkUrl, err := url.Parse(link)
@@ -99,11 +122,10 @@ func checkTLD(link string) bool {
 	return true
 }
 
-func handleAddToCache(links []string) {
+func handleAddToQueue(links []string, depth int) {
 	for _, link := range links {
-
-		if checkTLD(link) {
-			err := cache.AddToQueue(link)
+		if checkTLD(link) && isAllowedSchema(link, acceptableSchema) {
+			err := cache.AddToQueue(link, depth)
 			if err != nil {
 				log.Logger.Error(fmt.Sprintf("Error adding link to queue: %s", err))
 				return
