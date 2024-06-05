@@ -10,8 +10,11 @@ type Page struct {
 	Meta        []string  `json:"meta" bson:"meta"`
 	Visited     bool      `json:"visited" bson:"visited"`
 	Timestamp   time.Time `json:"timestamp" bson:"timestamp"`
+	Words       *Words    `json:"words" bson:"words"`
 }
 type PageVisited struct {
 	Url     string `json:"url" bson:"url"`
 	Visited bool   `json:"visited" bson:"visited"`
 }
+
+type Words map[string]int
