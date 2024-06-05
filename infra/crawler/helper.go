@@ -9,75 +9,14 @@ import (
 	"strings"
 )
 
-var denySuffixes = []string{
-	".css",
-	".js",
-	".png",
-	".jpg",
-	".jpeg",
-	".gif",
-	".svg",
-	".ico",
-	".mp4",
-	".mp3",
-	".avi",
-	".flv",
-	".mpeg",
-	".webp",
-	".webm",
-	".woff",
-	".woff2",
-	".ttf",
-	".eot",
-	".otf",
-	".pdf",
-	".zip",
-	".tar",
-	".gz",
-	".bz2",
-	".xz",
-	".7z",
-	".rar",
-	".apk",
-	".exe",
-	".dmg",
-	".img",
-}
-
 // isDenyPostfix checks if the link has a deny postfix
 func isDenyPostfix(url string, denySuffixes []string) bool {
 	for _, denySuffix := range denySuffixes {
-		if strings.HasSuffix(url, denySuffix) {
+		if strings.HasSuffix(strings.ToLower(url), denySuffix) {
 			return true
 		}
 	}
 	return false
-}
-
-var acceptableMimeTypes = []string{
-	"text/html",
-	"text/plain",
-	"text/xml",
-	"application/xml",
-	"application/xhtml+xml",
-	"application/rss+xml",
-	"application/atom+xml",
-	"application/rdf+xml",
-	"application/json",
-	"application/ld+json",
-	"application/vnd.geo+json",
-	"application/xml-dtd",
-	"application/rss+xml",
-	"application/atom+xml",
-	"application/rdf+xml",
-	"application/json",
-	"application/ld+json",
-	"application/vnd.geo+json",
-}
-var acceptableSchema = []string{
-	"http",
-	"https",
-	"",
 }
 
 // isAllowedSchema checks if the link has an acceptable schema
@@ -124,7 +63,7 @@ func checkTLD(link string) bool {
 
 func handleAddToQueue(links []string, depth int) {
 	for _, link := range links {
-		if checkTLD(link) && isAllowedSchema(link, acceptableSchema) {
+		if checkTLD(link) && isAllowedSchema(link, config.AcceptableSchema) {
 			err := cache.AddToQueue(link, depth)
 			if err != nil {
 				log.Logger.Error(fmt.Sprintf("Error adding link to queue: %s", err))
@@ -155,7 +94,7 @@ func prepareLink(link string) (*url.URL, error) {
 	q.Del("#")
 	linkUrl.RawQuery = q.Encode()
 
-	if isDenyPostfix(linkUrl.Path, denySuffixes) {
+	if isDenyPostfix(linkUrl.Path, config.DenySuffixes) {
 		return nil, fmt.Errorf("deny postfix")
 	}
 

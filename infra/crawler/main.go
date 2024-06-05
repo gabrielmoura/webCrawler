@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/gabrielmoura/WebCrawler/config"
@@ -8,7 +9,7 @@ import (
 	"github.com/gabrielmoura/WebCrawler/infra/log"
 	"go.uber.org/zap"
 	"golang.org/x/net/html"
-	"net/http"
+	"io"
 	"sync"
 	"time"
 )
@@ -32,7 +33,7 @@ func processPage(pageUrl string, depth int) {
 	SetVisited(pageUrl)
 
 	log.Logger.Info(fmt.Sprintf("Visiting %s", pageUrl))
-	htmlDoc, err := visitLink(pageUrl)
+	plainText, htmlDoc, err := visitLink(pageUrl)
 	if err != nil {
 		if errors.Is(err, mimeNotAllow) {
 			//log.Logger.Info(fmt.Sprintf("MIME not allowed: %s", pageUrl))
@@ -53,6 +54,8 @@ func processPage(pageUrl string, depth int) {
 		log.Logger.Error(fmt.Sprintf("Error extracting data: %s", err))
 		return
 	}
+	words, _ := countWordsInText(plainText)
+	dataPage.Words = words
 	dataPage.Url = pageUrl
 	dataPage.Links = links
 	dataPage.Timestamp = time.Now()
@@ -100,20 +103,31 @@ func loopQueue() {
 	}
 }
 
-func visitLink(pageUrl string) (*html.Node, error) {
+func visitLink(pageUrl string) ([]byte, *html.Node, error) {
+	// Improved error handling using the errors package
 	client := httpClient()
 	resp, err := client.Get(pageUrl)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("error fetching URL %s: %w", pageUrl, err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
+
+	// Streamlined MIME type check and early return
+	if !isAllowedMIME(resp.Header.Get("Content-Type"), config.AcceptableMimeTypes) {
+		return nil, nil, mimeNotAllow
 	}
-	contentType := resp.Header.Get("Content-Type")
-	if !isAllowedMIME(contentType, acceptableMimeTypes) {
-		resp.Body.Close() // Fechar o corpo da resposta
-		return nil, mimeNotAllow
+
+	// Efficiently read the response body into a buffer
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading response body: %w", err)
 	}
-	return html.Parse(resp.Body)
+
+	// Parse HTML from the buffered content
+	htmlDoc, err := html.Parse(bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing HTML: %w", err)
+	}
+
+	return bodyBytes, htmlDoc, nil
 }

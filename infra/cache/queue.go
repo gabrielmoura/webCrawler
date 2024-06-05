@@ -3,10 +3,10 @@ package cache
 import (
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
+	"github.com/gabrielmoura/WebCrawler/config"
 	"strconv"
 )
 
-var queueName = "queueIndex"
 var queue *BadgerQueue
 
 // Queue represents an interface for interacting with a queue data structure.
@@ -31,7 +31,7 @@ func NewBadgerQueue(db *badger.DB) *BadgerQueue {
 
 // Enqueue adds a URL to the queue.
 func (q *BadgerQueue) Enqueue(url string, depth int) error {
-	key := []byte(fmt.Sprintf("%s:%s", queueName, url))
+	key := []byte(fmt.Sprintf("%s:%s", config.QueueName, url))
 	return q.db.Update(func(txn *badger.Txn) error {
 		return txn.Set(key, []byte(strconv.Itoa(depth)))
 	})
@@ -48,7 +48,7 @@ func (q *BadgerQueue) Dequeue() (string, int, error) {
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
-		prefix := []byte(queueName)
+		prefix := []byte(config.QueueName)
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 			url = string(item.KeyCopy(nil)) // Copy the key to avoid issues
@@ -66,7 +66,7 @@ func (q *BadgerQueue) Dequeue() (string, int, error) {
 	}
 
 	if url != "" {
-		url = url[len(queueName)+1:]
+		url = url[len(config.QueueName)+1:]
 	}
 
 	return url, depth, nil

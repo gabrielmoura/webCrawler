@@ -10,7 +10,6 @@ import (
 )
 
 var cdb *badger.DB
-var indexName = "visitedIndex"
 
 func getBadgerMode() badger.Options {
 	if config.Conf.Cache.Mode == "mem" {
@@ -62,7 +61,7 @@ func OptimizeCache() error {
 	return nil
 }
 func IsVisited(url string) bool {
-	key := []byte(fmt.Sprintf("%s:%s", indexName, url))
+	key := []byte(fmt.Sprintf("%s:%s", config.VisitedIndexName, url))
 	err := cdb.View(func(txn *badger.Txn) error {
 		_, err := txn.Get(key)
 		if err != nil {
@@ -76,7 +75,7 @@ func IsVisited(url string) bool {
 	return true
 }
 func SetVisited(url string) error {
-	key := []byte(fmt.Sprintf("%s:%s", indexName, url))
+	key := []byte(fmt.Sprintf("%s:%s", config.VisitedIndexName, url))
 	err := cdb.Update(func(txn *badger.Txn) error {
 		err := txn.Set(key, []byte{})
 		if err != nil {

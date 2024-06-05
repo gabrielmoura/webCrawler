@@ -67,7 +67,7 @@ func loadByFlag() error {
 		MongoURI:       *mongoURI,
 		InicialURL:     *inicialURL,
 		Cache: &CacheConfig{
-			DBDir: "/tmp/badgerDB",
+			DBDir: "/tmp/WebCrawler",
 			Mode:  ternary.Ternary(*cacheMode, "mem", "disc"),
 		},
 		Proxy: &Proxy{
