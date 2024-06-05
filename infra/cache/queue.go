@@ -31,6 +31,8 @@ func NewBadgerQueue(db *badger.DB) *BadgerQueue {
 
 // Enqueue adds a URL to the queue.
 func (q *BadgerQueue) Enqueue(url string, depth int) error {
+	blockWrite.RLock()
+	defer blockWrite.RUnlock()
 	key := []byte(fmt.Sprintf("%s:%s", config.QueueName, url))
 	return q.db.Update(func(txn *badger.Txn) error {
 		return txn.Set(key, []byte(strconv.Itoa(depth)))
@@ -39,6 +41,9 @@ func (q *BadgerQueue) Enqueue(url string, depth int) error {
 
 // Dequeue retrieves and removes a URL from the queue.
 func (q *BadgerQueue) Dequeue() (string, int, error) {
+	blockWrite.RLock()
+	defer blockWrite.RUnlock()
+
 	var url string
 	var depth int
 

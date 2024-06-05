@@ -1,15 +1,23 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/gabrielmoura/WebCrawler/config"
 	"github.com/gabrielmoura/WebCrawler/infra/db"
 	"github.com/gabrielmoura/WebCrawler/infra/log"
+	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
-var cdb *badger.DB
+var (
+	cdb *badger.DB
+
+	// blockWrite é mutex para controle de otimização dos logs
+	blockWrite sync.RWMutex
+)
 
 func getBadgerMode() badger.Options {
 	if config.Conf.Cache.Mode == "mem" {
@@ -22,6 +30,9 @@ func getBadgerMode() badger.Options {
 func InitCache() error {
 	opts := getBadgerMode()
 	opts.Logger = nil
+	opts.CompactL0OnClose = true
+	opts.NumCompactors = 2
+	opts.ValueLogFileSize = 100 << 20 // 100 MB
 	open, err := badger.Open(opts)
 	if err != nil {
 		return err
@@ -30,7 +41,7 @@ func InitCache() error {
 
 	que := NewBadgerQueue(cdb)
 	queue = que
-	//defer OptimizeCache()
+	go OptimizeCache()
 	return nil
 }
 func SyncCache() error {
@@ -52,13 +63,20 @@ func SyncCache() error {
 	}
 	return nil
 }
-func OptimizeCache() error {
-	log.Logger.Info("Optimizing cache")
-	err := cdb.RunValueLogGC(0.5)
-	if err != nil {
-		return fmt.Errorf("error optimizing cache: %v", err)
+func OptimizeCache() {
+	if config.Conf.Cache.Mode == "mem" {
+		return
 	}
-	return nil
+	for {
+		time.Sleep(2 * time.Minute)
+		log.Logger.Info("Optimizing cache")
+		blockWrite.Lock()
+		err := cdb.RunValueLogGC(0.9)
+		if err != nil && !errors.Is(badger.ErrNoRewrite, err) {
+			log.Logger.Info("error optimizing cache", zap.Error(err))
+		}
+		blockWrite.Unlock()
+	}
 }
 func IsVisited(url string) bool {
 	key := []byte(fmt.Sprintf("%s:%s", config.VisitedIndexName, url))
@@ -75,6 +93,8 @@ func IsVisited(url string) bool {
 	return true
 }
 func SetVisited(url string) error {
+	blockWrite.RLock()
+	defer blockWrite.RUnlock()
 	key := []byte(fmt.Sprintf("%s:%s", config.VisitedIndexName, url))
 	err := cdb.Update(func(txn *badger.Txn) error {
 		err := txn.Set(key, []byte{})

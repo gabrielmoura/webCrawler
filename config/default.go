@@ -3,6 +3,7 @@ package config
 var QueueName = "queueIndex"
 var VisitedIndexName = "visitedIndex"
 
+// AcceptableMimeTypes Mimes aceitos, checagem quando visitado
 var AcceptableMimeTypes = []string{
 	"text/html",
 	"text/plain",
@@ -23,12 +24,15 @@ var AcceptableMimeTypes = []string{
 	"application/ld+json",
 	"application/vnd.geo+json",
 }
+
+// AcceptableSchema Schemas permitidos
 var AcceptableSchema = []string{
 	"http",
 	"https",
 	"",
 }
 
+// DenySuffixes Impede urls com estes sufixos de serem visitadas.
 var DenySuffixes = []string{
 	".css",
 	".js",
@@ -65,7 +69,7 @@ var DenySuffixes = []string{
 	".pdf",
 }
 
-// CommonStopWords Palavras de parada comuns (personalize conforme necessário, geradas por GPT)
+// CommonStopWords Palavras de parada comuns (personalize conforme necessário, palavras geradas por GPT)
 var CommonStopWords = map[string][]string{
 	"en": {"is", "or", "a", "and", "the", "are", "of", "to"},
 	"pt": {
