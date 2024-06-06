@@ -157,11 +157,8 @@ func isStatusErr(status int, url *url.URL) bool {
 			handleListHelperI2P(url.String())
 		}
 		return true
-	case http.StatusMovedPermanently:
-		// Seguir redirecionamento caso seja .i2p
-		return !i2p
 	default:
-		return status < 200 || status >= 400
+		return status < 200 || status >= 300
 	}
 }
 

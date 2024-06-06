@@ -13,6 +13,9 @@ var queue *BadgerQueue
 type Queue interface {
 	Enqueue(url string, depth int) error
 	Dequeue() (string, int, error)
+
+	Read() ([]QueueType, error)
+	Delete(url string) error
 }
 type QueueType struct {
 	Url   string `json:"url"`
@@ -75,4 +78,45 @@ func (q *BadgerQueue) Dequeue() (string, int, error) {
 	}
 
 	return url, depth, nil
+}
+
+// Read retrieves all URLs from the queue.
+func (q *BadgerQueue) Read() ([]QueueType, error) {
+	var urls []QueueType
+
+	err := q.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = true
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		prefix := []byte(config.QueueName)
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			url := string(item.KeyCopy(nil))
+			depth := 0
+			item.Value(func(val []byte) error {
+				depth, _ = strconv.Atoi(string(val))
+				return nil
+			})
+			urls = append(urls, QueueType{Url: url[len(config.QueueName)+1:], Depth: depth})
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error reading from queue: %v", err)
+	}
+
+	return urls, nil
+}
+
+// Delete removes a URL from the queue.
+func (q *BadgerQueue) Delete(url string) error {
+	blockWrite.RLock()
+	defer blockWrite.RUnlock()
+	key := []byte(fmt.Sprintf("%s:%s", config.QueueName, url))
+	return q.db.Update(func(txn *badger.Txn) error {
+		return txn.Delete(key)
+	})
 }

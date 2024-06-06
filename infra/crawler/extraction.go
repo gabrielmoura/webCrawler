@@ -10,7 +10,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/html"
 	"regexp"
+	"strings"
 )
+
+var InvalidMeta = errors.New("invalid meta")
 
 // countWordsInText Extrai e conta a frequência de palavras do conteúdo HTML, ignorando palavras irrelevantes comuns.
 func countWordsInText(data []byte) (map[string]int, error) {
@@ -102,31 +105,38 @@ func extractDescription(n *html.Node) string {
 	return ""
 }
 
-func extractOG(n *html.Node) map[string]string {
+func extractOG(n *html.Node) (map[string]string, error) {
 	ogData := make(map[string]string)
+	if n.Data != "meta" {
+		return nil, InvalidMeta
+	}
 	for _, a := range n.Attr {
 		if a.Key == "property" && len(a.Val) > 3 && a.Val[:3] == "og:" {
-			for _, a := range n.Attr {
-				if a.Key == "content" {
-					ogData[a.Val] = a.Val
+			for _, b := range n.Attr {
+				if b.Key == "content" {
+					ogData[a.Val] = b.Val
 				}
 			}
 		}
 	}
-	return ogData
+
+	return ogData, nil
 }
 
-func extractKeywords(n *html.Node) []string {
+func extractKeywords(n *html.Node) ([]string, error) {
+	if n.Data != "meta" {
+		return nil, InvalidMeta
+	}
 	for _, a := range n.Attr {
 		if a.Key == "name" && a.Val == "keywords" {
 			for _, a := range n.Attr {
 				if a.Key == "content" {
-					return append([]string{}, a.Val)
+					return strings.Split(a.Val, ","), nil
 				}
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func extractManifest(n *html.Node) string {
@@ -143,13 +153,8 @@ func extractManifest(n *html.Node) string {
 	}
 	return ""
 }
-func extractTitle(n *html.Node, dataPage *data.Page) {
-	if n.Data == "title" && n.FirstChild != nil {
-		dataPage.Title = n.FirstChild.Data
-	}
-}
-func extractMeta(n *html.Node, dataPage *data.Page) {
 
+func extractMeta(n *html.Node, dataPage *data.Page) {
 	if n.Data == "meta" {
 		if dataPage.Meta == nil {
 			dataPage.Meta = metaNull
@@ -159,20 +164,32 @@ func extractMeta(n *html.Node, dataPage *data.Page) {
 			dataPage.Description = description
 		}
 
-		ogData := extractOG(n)
-		for k, v := range ogData {
-			dataPage.Meta.OG[k] = v
+		ogData, err := extractOG(n)
+		if err == nil {
+			for k, v := range ogData {
+				dataPage.Meta.OG[k] = v
+			}
 		}
 
-		keywords := extractKeywords(n)
-		if keywords != nil {
-			dataPage.Meta.Keywords = append(dataPage.Meta.Keywords, keywords...)
+		keywords, err := extractKeywords(n)
+		if keywords != nil && err == nil {
+			dataPage.Meta.Keywords = keywords
 		}
 	}
 
 	manifest := extractManifest(n)
 	if manifest != "" {
 		dataPage.Meta.Manifest = manifest
+	}
+
+	if dataPage.Meta.Manifest == "" && len(dataPage.Meta.OG) == 0 && len(dataPage.Meta.Keywords) == 0 {
+		dataPage.Meta = nil
+	}
+}
+
+func extractTitle(n *html.Node, dataPage *data.Page) {
+	if n.Data == "title" && n.FirstChild != nil {
+		dataPage.Title = n.FirstChild.Data
 	}
 }
 
