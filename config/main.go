@@ -19,8 +19,8 @@ var (
 	inicialURL     = flag.String("url", "https://www.uol.com.br", "URL inicial")
 	cacheMode      = flag.Bool("mem", false, "Cache mode")
 	// tlds list of Top-Level Domains
-	tlds     = flag.String("tlds", "", "TLDs to filter EX: com,br,org")
-	mongoURI = flag.String("mongoURI", "mongodb://root:Strong%40P4word@localhost:27017", "Mongo URI")
+	tlds        = flag.String("tlds", "", "TLDs to filter EX: com,br,org")
+	postgresURI = flag.String("postgresURI", "postgres://postgres:Strong@P4ssword@localhost/crawler", "Postgres URI")
 )
 
 func splitComma(txt string) []string {
@@ -33,7 +33,7 @@ func splitComma(txt string) []string {
 type Config struct {
 	MaxConcurrency int          `mapstructure:"MAX_CONCURRENCY"`
 	MaxDepth       int          `mapstructure:"MAX_DEPTH"`
-	MongoURI       string       `mapstructure:"MONGO_URI"`
+	PostgresURI    string       `mapstructure:"POSTGRES_URI"`
 	AppName        string       `mapstructure:"APP_NAME"`
 	TimeFormat     string       `mapstructure:"TIME_FORMAT"`
 	TimeZone       string       `mapstructure:"TIME_ZONE"`
@@ -64,7 +64,7 @@ func loadByFlag() error {
 		TimeZone:       "America/Sao_Paulo",
 		MaxConcurrency: *MaxConcurrency,
 		MaxDepth:       *MaxDepth,
-		MongoURI:       *mongoURI,
+		PostgresURI:    *postgresURI,
 		InicialURL:     *inicialURL,
 		Cache: &CacheConfig{
 			DBDir: "/tmp/WebCrawler",
@@ -90,8 +90,8 @@ func loadByConfigFile() error {
 	vip.SetDefault("APP_NAME", "WebCrawler")
 	vip.SetDefault("TIME_FORMAT", "02-Jan-2006")
 	vip.SetDefault("TIME_ZONE", "America/Sao_Paulo")
-	vip.SetDefault("DB_DIR", "/tmp/badgerDB")
-	vip.SetDefault("MONGO_URI", "mongodb://root:Strong%40P4word@localhost:27017")
+	vip.SetDefault("DB_DIR", "/tmp/WebCrawler")
+	vip.SetDefault("POSTGRES_URI", "postgres://postgres:Strong@P4ssword@localhost/crawler")
 
 	vip.SetDefault("PROXY.ENABLED", false)
 	vip.SetDefault("PROXY.PROXY_URL", "http://localhost:4444")
