@@ -14,7 +14,7 @@ import (
 
 // countWordsInText Extrai e conta a frequência de palavras do conteúdo HTML, ignorando palavras irrelevantes comuns.
 func countWordsInText(data []byte) (map[string]int, error) {
-	log.Logger.Info("Word Count")
+	log.Logger.Debug("Word Count")
 	// Etapa 1: Ignorar determinadas tags HTML
 	htmlRegex := regexp.MustCompile("(?s)<(script|style|noscript|link|meta)[^>]*?>.*?</(script|style|noscript|link|meta)>")
 	parcialPlainText := htmlRegex.ReplaceAll(data, []byte(""))
@@ -70,23 +70,15 @@ func extractData(n *html.Node) (*data.Page, error) {
 	var extract func(*html.Node)
 	extract = func(n *html.Node) {
 		if n.Type == html.ElementNode {
-			if n.Data == "title" && n.FirstChild != nil {
-				dataPage.Title = n.FirstChild.Data
-			} else if n.Data == "meta" {
-				var isDescription bool
-				for _, a := range n.Attr {
-					if a.Key == "name" && a.Val == "description" {
-						isDescription = true
-					}
-					if a.Key == "content" {
-						if isDescription {
-							dataPage.Description = a.Val
-						} else {
-							dataPage.Meta = append(dataPage.Meta, a.Val)
-						}
-					}
-				}
+			switch n.Data {
+			case "title":
+				extractTitle(n, &dataPage)
+			case "meta":
+				extractMeta(n, &dataPage)
+			case "script":
+				extractJSONLD(n, &dataPage)
 			}
+
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			extract(c)
@@ -97,6 +89,94 @@ func extractData(n *html.Node) (*data.Page, error) {
 	return &dataPage, nil
 }
 
+func extractDescription(n *html.Node) string {
+	for _, a := range n.Attr {
+		if a.Key == "name" && a.Val == "description" {
+			for _, a := range n.Attr {
+				if a.Key == "content" {
+					return a.Val
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func extractOG(n *html.Node) map[string]string {
+	ogData := make(map[string]string)
+	for _, a := range n.Attr {
+		if a.Key == "property" && len(a.Val) > 3 && a.Val[:3] == "og:" {
+			for _, a := range n.Attr {
+				if a.Key == "content" {
+					ogData[a.Val] = a.Val
+				}
+			}
+		}
+	}
+	return ogData
+}
+
+func extractKeywords(n *html.Node) []string {
+	for _, a := range n.Attr {
+		if a.Key == "name" && a.Val == "keywords" {
+			for _, a := range n.Attr {
+				if a.Key == "content" {
+					return append([]string{}, a.Val)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func extractManifest(n *html.Node) string {
+	if n.Data == "link" {
+		var isManifest bool
+		for _, a := range n.Attr {
+			if a.Key == "rel" && a.Val == "manifest" {
+				isManifest = true
+			}
+			if a.Key == "href" && isManifest {
+				return a.Val
+			}
+		}
+	}
+	return ""
+}
+func extractTitle(n *html.Node, dataPage *data.Page) {
+	if n.Data == "title" && n.FirstChild != nil {
+		dataPage.Title = n.FirstChild.Data
+	}
+}
+func extractMeta(n *html.Node, dataPage *data.Page) {
+
+	if n.Data == "meta" {
+		if dataPage.Meta == nil {
+			dataPage.Meta = metaNull
+		}
+		description := extractDescription(n)
+		if description != "" {
+			dataPage.Description = description
+		}
+
+		ogData := extractOG(n)
+		for k, v := range ogData {
+			dataPage.Meta.OG[k] = v
+		}
+
+		keywords := extractKeywords(n)
+		if keywords != nil {
+			dataPage.Meta.Keywords = append(dataPage.Meta.Keywords, keywords...)
+		}
+	}
+
+	manifest := extractManifest(n)
+	if manifest != "" {
+		dataPage.Meta.Manifest = manifest
+	}
+}
+
+// extractLinks Extrai links de um documento HTML.
 func extractLinks(parentLink string, n *html.Node) ([]string, error) {
 	var links []string
 
@@ -128,4 +208,24 @@ func extractLinks(parentLink string, n *html.Node) ([]string, error) {
 
 	extract(n)
 	return links, nil
+}
+func extractJSONLD(n *html.Node, dataPage *data.Page) {
+	for _, a := range n.Attr {
+		if a.Key == "type" && a.Val == "application/ld+json" {
+			if dataPage.Meta == nil {
+				dataPage.Meta = metaNull
+			}
+			if n.FirstChild != nil {
+				content := n.FirstChild.Data
+				dataPage.Meta.Ld = content
+			}
+		}
+	}
+}
+
+var metaNull = &data.MetaData{
+	OG:       make(map[string]string),
+	Keywords: []string{},
+	Manifest: "",
+	Ld:       "",
 }

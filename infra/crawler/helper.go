@@ -1,12 +1,21 @@
 package crawler
 
 import (
-	"fmt"
+	"errors"
 	"github.com/gabrielmoura/WebCrawler/config"
 	"github.com/gabrielmoura/WebCrawler/infra/cache"
 	"github.com/gabrielmoura/WebCrawler/infra/log"
+	"go.uber.org/zap"
+	"net/http"
 	"net/url"
 	"strings"
+)
+
+var (
+	invalidSchemaErr = errors.New("invalid schema")
+	ErrLocalLink     = errors.New("local link")
+	ErrEmptyPath     = errors.New("empty path")
+	ErrDenySuffix    = errors.New("deny suffix")
 )
 
 // isDenyPostfix checks if the link has a deny postfix
@@ -23,7 +32,7 @@ func isDenyPostfix(url string, denySuffixes []string) bool {
 func isAllowedSchema(link string, acceptableSchema []string) bool {
 	nLink, err := url.Parse(link)
 	if err != nil {
-		log.Logger.Debug(fmt.Sprintf("Error parsing link in checking schema: %s", err))
+		log.Logger.Debug("error parsing link in checking schema", zap.String("Link", link), zap.Error(err))
 		return false
 	}
 	for _, schema := range acceptableSchema {
@@ -66,7 +75,7 @@ func handleAddToQueue(links []string, depth int) {
 		if checkTLD(link) && isAllowedSchema(link, config.AcceptableSchema) {
 			err := cache.AddToQueue(link, depth)
 			if err != nil {
-				log.Logger.Error(fmt.Sprintf("Error adding link to queue: %s", err))
+				log.Logger.Error("error adding link to queue", zap.String("Link", link), zap.Error(err))
 				return
 			}
 		}
@@ -74,12 +83,22 @@ func handleAddToQueue(links []string, depth int) {
 	}
 }
 
-var invalidSchemaErr = fmt.Errorf("invalid schema")
+// isLocalLink verifica se o link é local,
+// caso definido para ignorar não adiciona a fila
+func isLocalLink(link *url.URL) bool {
+	if !config.Conf.Filter.IgnoreLocal {
+		return false
+	}
+	return link.Host == "localhost" || link.Host == "127.0.0.1"
+}
 
 func prepareLink(link string) (*url.URL, error) {
 	linkUrl, err := url.Parse(link)
 	if err != nil {
 		return nil, err
+	}
+	if isLocalLink(linkUrl) {
+		return nil, ErrLocalLink
 	}
 
 	if linkUrl.Scheme == "" {
@@ -95,7 +114,7 @@ func prepareLink(link string) (*url.URL, error) {
 	linkUrl.RawQuery = q.Encode()
 
 	if isDenyPostfix(linkUrl.Path, config.DenySuffixes) {
-		return nil, fmt.Errorf("deny postfix")
+		return nil, ErrDenySuffix
 	}
 
 	return linkUrl, nil
@@ -112,7 +131,7 @@ func prepareParentLink(parentLink, link string) (*url.URL, error) {
 		return nil, err
 	}
 	if nURL.Path == "" {
-		return nil, fmt.Errorf("empty path")
+		return nil, ErrEmptyPath
 	}
 
 	pURL, err := url.Parse(parentLink)
@@ -122,7 +141,30 @@ func prepareParentLink(parentLink, link string) (*url.URL, error) {
 
 	nURL.Host = pURL.Host
 	nURL.Scheme = pURL.Scheme
-	log.Logger.Debug(fmt.Sprintf("New URL: %v\n", nURL))
+	log.Logger.Debug("New URL", zap.String("URL", nURL.String()))
 
 	return nURL, nil
+}
+func isStatusErr(status int, url *url.URL) bool {
+	if status == http.StatusOK {
+		return false
+	}
+
+	i2p := strings.HasSuffix(url.Host, ".i2p")
+	switch status {
+	case http.StatusConflict:
+		if i2p {
+			handleListHelperI2P(url.String())
+		}
+		return true
+	case http.StatusMovedPermanently:
+		// Seguir redirecionamento caso seja .i2p
+		return !i2p
+	default:
+		return status < 200 || status >= 400
+	}
+}
+
+func handleListHelperI2P(url string) {
+	// TODO: Lógica para adicionar a lista de helpers encontrados
 }

@@ -37,7 +37,7 @@ CREATE TABLE pages
     links       TEXT[],
     title       TEXT,
     description TEXT,
-    meta        TEXT[],
+    meta        JSONB,
     visited     BOOLEAN,
     timestamp   TIMESTAMP WITH TIME ZONE,
     words       JSONB

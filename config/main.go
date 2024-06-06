@@ -51,7 +51,8 @@ type Proxy struct {
 	ProxyURL string `mapstructure:"PROXY_URL"`
 }
 type Filter struct {
-	Tlds []string `mapstructure:"TLDS"`
+	Tlds        []string `mapstructure:"TLDS"`
+	IgnoreLocal bool     `mapstructure:"IGNORE_LOCAL"`
 }
 
 var Conf *Config
@@ -75,7 +76,8 @@ func loadByFlag() error {
 			ProxyURL: *proxyURL,
 		},
 		Filter: &Filter{
-			Tlds: splitComma(*tlds),
+			Tlds:        splitComma(*tlds),
+			IgnoreLocal: false,
 		},
 	}
 	// Atualiza a variável global Conf
@@ -97,6 +99,7 @@ func loadByConfigFile() error {
 	vip.SetDefault("PROXY.PROXY_URL", "http://localhost:4444")
 
 	vip.SetDefault("FILTER.TLDS", []string{})
+	vip.SetDefault("FILTER.IGNORE_LOCAL", false)
 
 	// Lendo o arquivo de configuração conf.yml
 	vip.SetConfigName("conf")

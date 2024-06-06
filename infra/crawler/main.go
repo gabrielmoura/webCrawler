@@ -15,7 +15,10 @@ import (
 )
 
 var Wg sync.WaitGroup
-var mimeNotAllow = errors.New("mime: not allowed")
+var (
+	mimeNotAllow        = errors.New("mime: not allowed")
+	ErrUnexpectedStatus = errors.New("unexpected status")
+)
 
 // processPage processa uma página, extrai links e dados
 func processPage(pageUrl string, depth int) {
@@ -54,6 +57,7 @@ func processPage(pageUrl string, depth int) {
 		return
 	}
 	words, _ := countWordsInText(plainText)
+
 	dataPage.Words = words
 	dataPage.Url = pageUrl
 	dataPage.Links = links
@@ -103,13 +107,18 @@ func loopQueue() {
 }
 
 func visitLink(pageUrl string) ([]byte, *html.Node, error) {
-	// Improved error handling using the errors package
 	client := httpClient()
 	resp, err := client.Get(pageUrl)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error fetching URL %s: %w", pageUrl, err)
 	}
 	defer resp.Body.Close()
+
+	if isStatusErr(resp.StatusCode, resp.Request.URL) {
+		// TODO: Implementar lógica para por em outra fila e ternar novamente
+		log.Logger.Info("Status Error", zap.String("URL", pageUrl), zap.String("Status", resp.Status))
+		return nil, nil, ErrUnexpectedStatus
+	}
 
 	// Streamlined MIME type check and early return
 	if !isAllowedMIME(resp.Header.Get("Content-Type"), config.AcceptableMimeTypes) {
