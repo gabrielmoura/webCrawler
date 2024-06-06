@@ -30,7 +30,6 @@ func processPage(pageUrl string, depth int) {
 	if GetVisited(pageUrl) {
 		return
 	}
-	SetVisited(pageUrl)
 
 	log.Logger.Info(fmt.Sprintf("Visiting %s", pageUrl))
 	plainText, htmlDoc, err := visitLink(pageUrl)
@@ -63,9 +62,9 @@ func processPage(pageUrl string, depth int) {
 
 	SetPage(pageUrl, dataPage)
 
-	handleAddToQueue(links, depth+1)
+	SetVisited(pageUrl)
 
-	log.Logger.Info(fmt.Sprintf("Total links %d", len(links)))
+	handleAddToQueue(links, depth+1)
 }
 func HandleQueue(initialURL string) {
 	// Só processa a fila se ela não estiver vazia

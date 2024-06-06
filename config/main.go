@@ -3,9 +3,9 @@ package config
 import (
 	"errors"
 	"flag"
+	"github.com/gabrielmoura/WebCrawler/infra/log"
 	"github.com/gabrielmoura/go/pkg/ternary"
 	"github.com/spf13/viper"
-	"log"
 	"regexp"
 	"strings"
 )
@@ -137,10 +137,10 @@ func loadByConfigFile() error {
 func LoadConfig() error {
 	flag.Parse()
 	if *enabledConfig {
-		log.Printf("Carregando configurações do arquivo")
+		log.Logger.Info("Carregando configurações do arquivo")
 		return loadByConfigFile()
 	} else {
-		log.Printf("Carregando configurações por flag")
+		log.Logger.Info("Carregando configurações por flag")
 		return loadByFlag()
 	}
 }
