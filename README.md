@@ -60,6 +60,20 @@ Para executar o crawler usando um arquivo de configuração, utilize o comando a
   -maxDepth=50 \
   -url=https://www.uol.com.br
 ```
+## Consumo de Recursos
+O Crawler pode consumir mais ou menos recursos conforme as configurações de concorrência e profundidade.
+Recomenda-se ajustar essas configurações conforme a capacidade do servidor e a quantidade de dados que deseja coletar.
+Alguns comandos úteis para monitorar o consumo de recursos são:
+
+#### Ver Memória
+```bash
+pmap -x $(pidof crawler)| awk '/kB total/ {print $5, $2}'
+```
+
+#### Ver CPU
+```bash
+ps aux | grep crawler | awk '{print $11, $3}'
+```
 
 ## Contribuição
 Sinta-se à vontade para contribuir com o desenvolvimento deste projeto. Para relatar problemas ou sugerir melhorias, abra uma issue ou envie um pull request.
