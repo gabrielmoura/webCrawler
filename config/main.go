@@ -21,6 +21,7 @@ var (
 	// tlds list of Top-Level Domains
 	tlds        = flag.String("tlds", "", "TLDs to filter EX: com,br,org")
 	postgresURI = flag.String("postgresURI", "postgres://postgres:Strong@P4ssword@localhost/crawler", "Postgres URI")
+	userAgent   = flag.String("userAgent", "Go-http-client/1.1", "User-Agent")
 )
 
 func splitComma(txt string) []string {
@@ -41,6 +42,7 @@ type Config struct {
 	Cache          *CacheConfig `mapstructure:"CACHE"`
 	Proxy          *Proxy       `mapstructure:"PROXY"`
 	Filter         *Filter      `mapstructure:"FILTER"`
+	UserAgent      string       `mapstructure:"USER_AGENT"`
 }
 type CacheConfig struct {
 	DBDir string `mapstructure:"DB_DIR"`
@@ -67,6 +69,7 @@ func loadByFlag() error {
 		MaxDepth:       *MaxDepth,
 		PostgresURI:    *postgresURI,
 		InicialURL:     *inicialURL,
+		UserAgent:      *userAgent,
 		Cache: &CacheConfig{
 			DBDir: "/tmp/WebCrawler",
 			Mode:  ternary.Ternary(*cacheMode, "mem", "disc"),
@@ -94,6 +97,9 @@ func loadByConfigFile() error {
 	vip.SetDefault("TIME_ZONE", "America/Sao_Paulo")
 	vip.SetDefault("DB_DIR", "/tmp/WebCrawler")
 	vip.SetDefault("POSTGRES_URI", "postgres://postgres:Strong@P4ssword@localhost/crawler")
+	vip.SetDefault("MAX_CONCURRENCY", 10)
+	vip.SetDefault("MAX_DEPTH", 2)
+	vip.SetDefault("USER_AGENT", "Go-http-client/1.1")
 
 	vip.SetDefault("PROXY.ENABLED", false)
 	vip.SetDefault("PROXY.PROXY_URL", "http://localhost:4444")
